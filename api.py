@@ -8,6 +8,7 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+
 app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root@localhost/u"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'super-secreta'  # Cambiar en producción
@@ -39,7 +40,6 @@ class UserSchema(SQLAlchemySchema):
     id = auto_field()
     username = auto_field()
     email = auto_field()
-
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
@@ -91,8 +91,11 @@ class Login(Resource):
         
         if not user or not bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
             return {'mensaje': 'Credenciales inválidas'}, 401
-            
-        access_token = create_access_token(identity=user.id)
+
+        # 🔧 Solución aquí: pasar el ID como string
+        access_token = create_access_token(identity=str(user.id))
+
+        # access_token = create_access_token(identity=str(user.id))
         return {'access_token': access_token}, 200
 
 @ns.route('/usuarios')
@@ -117,8 +120,9 @@ class Usuario(Resource):
         """Actualizar usuario"""
         usuario = User.query.get_or_404(id)
         data = request.get_json()
-        
-        current_user_id = get_jwt_identity()
+
+        # 🔧 Convertimos de vuelta a int
+        current_user_id = int(get_jwt_identity())
         if usuario.id != current_user_id:
             return {'mensaje': 'No autorizado'}, 403
         
@@ -136,8 +140,7 @@ class Usuario(Resource):
     def delete(self, id):
         """Eliminar usuario"""
         usuario = User.query.get_or_404(id)
-        
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())
         if usuario.id != current_user_id:
             return {'mensaje': 'No autorizado'}, 403
         
