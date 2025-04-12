@@ -94,8 +94,6 @@ class Login(Resource):
 
         # 🔧 Solución aquí: pasar el ID como string
         access_token = create_access_token(identity=str(user.id))
-
-        # access_token = create_access_token(identity=str(user.id))
         return {'access_token': access_token}, 200
 
 @ns.route('/usuarios')
@@ -140,9 +138,6 @@ class Usuario(Resource):
     def delete(self, id):
         """Eliminar usuario"""
         usuario = User.query.get_or_404(id)
-        current_user_id = int(get_jwt_identity())
-        if usuario.id != current_user_id:
-            return {'mensaje': 'No autorizado'}, 403
         
         db.session.delete(usuario)
         db.session.commit()
